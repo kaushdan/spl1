@@ -4,6 +4,7 @@
 
 Restaurant::Restaurant():open(true),count(0),tables(),menu(),actionsLog(){}
 
+///using config file
 Restaurant::Restaurant(const std::string& configFilePath):open(true),count(0),tables(),menu(),actionsLog()
 {
     std::fstream myFile(configFilePath);
@@ -58,6 +59,7 @@ Restaurant::Restaurant(const std::string& configFilePath):open(true),count(0),ta
     }
 }
 
+///updates strings during reading from config file
 void Restaurant::receive(std::string &ref1, std::string &ref2)
 {
     std::cin >> ref1;
@@ -65,21 +67,23 @@ void Restaurant::receive(std::string &ref1, std::string &ref2)
     setLine(ref2);
 }
 
+///shaping the strings
 void Restaurant::setLine(std::string &params)
 {
     if(!params.empty())
         params=params.substr(1);
 }
 
+///opens the restaurant
 void Restaurant::start()
 {
     std::string command_name;
     std::string params;
     std::string& ref1=command_name;
     std::string& ref2=params;
-    std::cout <<"Our restaurant is open for business!";
+    std::cout <<"Restaurant is now open!";
     Restaurant::receive(ref1,ref2);
-    while (!command_name.empty())
+    while (command_name!="closeall")
     {
         if(command_name=="open")
         {
@@ -96,10 +100,6 @@ void Restaurant::start()
         else if(command_name=="close")
         {
             close(params);
-        }
-        else if(command_name=="closeall")
-        {
-            closeAll();
         }
         else if(command_name=="menu")
         {
@@ -123,9 +123,10 @@ void Restaurant::start()
         }
         Restaurant::receive(ref1,ref2);
     }
-
+    closeAll();
 }
 
+///activates MoveCustomer action
 void Restaurant::moveCustomer(std::string params)
 {
     int src,dst,id;
@@ -151,6 +152,8 @@ void Restaurant::moveCustomer(std::string params)
     moveCustomer->act(*this);
     actionsLog.push_back(moveCustomer);
 }
+
+///activates OpenTable action
 void Restaurant::openTable(std::string params)
 {
     int id;
@@ -195,6 +198,7 @@ void Restaurant::openTable(std::string params)
     actionsLog.push_back(openTable);
 }
 
+///activates Order action
 void Restaurant::order(std::string params)
 {
     int id=std::stoi(params);
@@ -203,13 +207,14 @@ void Restaurant::order(std::string params)
     actionsLog.push_back(orderAction);
 }
 
+///activates CloseAll action - closes the restaurant
 void Restaurant::closeAll()
 {
     BaseAction* closeAll=new CloseAll();
     closeAll->act(*this);
-    actionsLog.push_back(closeAll);
 }
 
+///activates PrintMenu action
 void Restaurant::printMenu()
 {
     BaseAction* printMenu=new PrintMenu();
@@ -217,6 +222,7 @@ void Restaurant::printMenu()
     actionsLog.push_back(printMenu);
 }
 
+///activates PrintActionsLog action
 void Restaurant::printActionsLog()
 {
     BaseAction* printactionsLog=new PrintActionsLog();
@@ -224,6 +230,7 @@ void Restaurant::printActionsLog()
     actionsLog.push_back(printactionsLog);
 }
 
+///activates PrintTableStatus action
 void Restaurant::printTableStatus(std::string params)
 {
     int id=std::stoi(params);
@@ -232,6 +239,7 @@ void Restaurant::printTableStatus(std::string params)
     actionsLog.push_back(printtableStatus);
 }
 
+///activates BackupRestaurant action
 void Restaurant::backupRestaurant()
 {
     BaseAction* backupRestaurant=new BackupRestaurant();
@@ -239,6 +247,7 @@ void Restaurant::backupRestaurant()
     actionsLog.push_back(backupRestaurant);
 }
 
+///activates RestoreResturant action
 void Restaurant::restoreRestaurant()
 {
     BaseAction* restoreRestaurant=new RestoreResturant();
@@ -246,6 +255,7 @@ void Restaurant::restoreRestaurant()
     actionsLog.push_back(restoreRestaurant);
 }
 
+///activates Close action
 void Restaurant::close(std::string params)
 {
     int id=std::stoi(params);
@@ -254,6 +264,7 @@ void Restaurant::close(std::string params)
     actionsLog.push_back(close);
 }
 
+//.adding dish to the menu
 void Restaurant::addDish(std::vector<std::string> dish_components)
 {
     DishType dish_type=Restaurant::type(dish_components[1]);
@@ -262,6 +273,7 @@ void Restaurant::addDish(std::vector<std::string> dish_components)
 
 }
 
+///defines dish's type
 DishType Restaurant::type(std::string data)
 {
     if(data=="ALC")
@@ -272,24 +284,27 @@ DishType Restaurant::type(std::string data)
         return SPC;
     return VEG;
 }
+
+///adding table to the restaurant
 void Restaurant::addTable(int src,int dst,std::string line)
 {
     int capacity = std::stoi(line.substr(src, dst - src));
-    Table tmp(capacity);
-    Table *table = &tmp;
-    tables.push_back(table);
+    tables.push_back(new Table(capacity));
 }
 
+///copy constructor
 Restaurant::Restaurant(const Restaurant& other):tables(),menu(),actionsLog()
 {
     copy(other);
 }
 
+///move constructor
 Restaurant::Restaurant(Restaurant&& other):tables(),menu(),actionsLog()
 {
-    copy(other);
+    steal(other);
 }
 
+///copy assignment operator
 Restaurant& Restaurant::operator=(const Restaurant& other)
 {
     if(&other!=this)
@@ -300,21 +315,26 @@ Restaurant& Restaurant::operator=(const Restaurant& other)
     return *this;
 }
 
+///move assignment operator
 Restaurant& Restaurant::operator=(Restaurant&& other)
 {
-    clean();
-    copy(other);
-    return *this;
+    Restaurant::steal(other);
+    return  *this;
 }
 
+///copy data - deep copy
 void Restaurant::copy(const Restaurant& other)
 {
-//    open=other.open;
-//    tables=other.tables;
-//    menu=other.menu;
-//    actionsLog=other.actionsLog;
+
 }
 
+///steal method
+void Restaurant::steal(Restaurant &other)
+{
+
+}
+
+///deallocates all memory
 void Restaurant::clean()
 {
     for(int i=0;i<tables.size();i++)
@@ -332,21 +352,27 @@ void Restaurant::clean()
     menu.clear();
 }
 
+///number of tables in the restaurant
 int Restaurant::getNumOfTables() const
 {
     return tables.size();
 }
 
+///get a required table
 Table* Restaurant::getTable(int ind)
 {
-    return  tables[ind];
+    if(ind>=0 && ind<tables.size())
+      return tables[ind];
+    return nullptr;
 }
 
+///actions log of the restaurant
 const std::vector<BaseAction*>& Restaurant::getActionsLog() const
 {
     return actionsLog;
 }
 
+///menu of the restaurant
 std::vector<Dish>& Restaurant::getMenu()
 {
     std::vector<Dish>& returnMenu=menu;
