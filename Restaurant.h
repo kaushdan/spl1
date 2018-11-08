@@ -29,6 +29,7 @@ private:
     std::vector<BaseAction*> actionsLog;
     int count;
     void clean();
+    void steal(Restaurant& other);
     void copy(const Restaurant& other);
     void addTable(int src,int dst,std::string line);
     void addDish(std::vector<std::string> dish_components);
@@ -48,3 +49,4 @@ private:
 };
 
 #endif
+
