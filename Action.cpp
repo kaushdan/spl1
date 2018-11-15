@@ -25,21 +25,59 @@ std::string BaseAction::getErrorMsg() const
 }
 
 ///class OpenTable that inherits from BaseAction,responsible for opening a table
-OpenTable::OpenTable(int id,std::vector<Customer *> &customersList):BaseAction(),tableId(id),customers(customersList) {}
+OpenTable::OpenTable(int id,std::vector<Customer *> &customersList):BaseAction(),tableId(id),customers(customersList), output() {}
 
 void OpenTable::act(Restaurant &restaurant)
 {
     Table* table=restaurant.getTable(this.id);
     if(table== nullptr || table->isOpen()) {
         BaseAction::error("Table does not exist or is already open");
-        std::cout << "Error: " << getErrorMsg() << std::endl;s
+        std::cout << "Error: " << getErrorMsg() << std::endl;
     }
     else
     {
         table->openTable();
-        for (int i = 0; i < customers.size(), i++)
+        for (int i = 0; i < customers.size(); i++)
             table->addCustomer(customers[i]);
         BaseAction::complete();
     }
 }
+
+void OpenTable::setOutput(std::string input)
+{
+    output=input;
+}
+
+std::string OpenTable::toString() const
+{
+    if(getStatus() == COMPLETED) return output + " Completed";
+    return output + " Error: "+getErrorMsg();
+}
+
+///class Order that inherits from BaseAction,responsible for taking an order from a table
+Order::Order(int id):BaseAction(),tableId(id), output(){}
+
+void Order::act(Restaurant &restaurant)
+{
+    Table* table=restaurant.getTable(tableId);
+    if(table== nullptr || !table->isOpen()) error("Table does not exist or is not open");
+    else {
+        table->order(restaurant.getMenu());
+        complete();
+    }
+}
+
+void Order::setOutput(std::string input)
+{
+    output=input;
+}
+
+std::string Order::toString() const
+{
+    if(getStatus() == COMPLETED) return output+" Completed";
+    return output + " Error: "+getErrorMsg();
+}
+
+///class Order that inherits from BaseAction,responsible for taking an order from a table
+
 
